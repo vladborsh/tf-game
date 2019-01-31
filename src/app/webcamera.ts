@@ -26,16 +26,16 @@ export class WebCamera {
     return img.slice([beginHeight, beginWidth, 0], [size, size, 3]);
   }
 
-  public adjustVideoSize(width: number, height: number): void {
+  public static adjustVideoSize(video: HTMLVideoElement, width: number, height: number): void {
     const aspectRatio = width / height;
     if (width >= height) {
-      this.webcamElement.width = aspectRatio * this.webcamElement.height;
+      video.width = aspectRatio * video.height;
     } else if (width < height) {
-      this.webcamElement.height = this.webcamElement.width / aspectRatio;
+      video.height = video.width / aspectRatio;
     }
   }
 
-  public async setup(): Promise<void> {
+  public static async setup(video: HTMLVideoElement): Promise<{}> {
     return new Promise((resolve, reject) => {
       navigator.getUserMedia = navigator.getUserMedia;
       if (!navigator.getUserMedia) {
@@ -45,18 +45,12 @@ export class WebCamera {
       navigator.getUserMedia(
         { video: true },
         stream => {
-          this.webcamElement.srcObject = stream;
-          this.webcamElement.addEventListener(
-            "loadeddata",
-            async () => {
-              this.adjustVideoSize(
-                this.webcamElement.videoWidth,
-                this.webcamElement.videoHeight
-              );
-              resolve();
-            },
-            false
-          );
+          video.srcObject = stream;
+          video.addEventListener('loadeddata', async () => {
+            this.adjustVideoSize(video, video.videoWidth, video.videoHeight);
+            resolve();
+          }, false);
+          resolve()
         },
         reject,
       );

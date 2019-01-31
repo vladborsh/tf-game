@@ -1,21 +1,46 @@
-<!--The content below is only a placeholder and can be replaced.-->
-<div style="text-align:center">
-  <h1>
-    Welcome to {{ title }}!
-  </h1>
-  <img width="300" alt="Angular Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg==">
+<div class="container">
+  <div class="row my-5">
+    <div class="col text-center">
+      <div class="webcam-box-outer">
+        <video #video autoplay id="video" width="224" height="224"></video>
+      </div>
+    </div>
+  </div>
+  <div class="row mb-5">
+    <div class="col text-center">
+      <div>
+        <canvas *ngIf="isStoneCaptured" class="thumb" width=224 height=224 #stoneThumb></canvas>
+      </div>
+      <button *ngIf="!isStoneCaptured" (click)="onStone()" [disabled]="isButtonLocked" type="button" class="btn btn-outline-secondary add-sample">+</button>
+      <p class="text-muted">Stone</p>
+    </div>
+    <div class="col text-center">
+      <div>
+        <canvas *ngIf="isScissorsCaptured" class="thumb" width=224 height=224 #scissorsThumb></canvas>
+      </div>
+      <button *ngIf="!isScissorsCaptured" (click)="onScissors()" [disabled]="isButtonLocked" type="button" class="btn btn-outline-secondary add-sample">+</button>
+      <p class="text-muted">Scissors</p>
+    </div>
+    <div class="col text-center">
+      <div>
+        <canvas *ngIf="isPaperCaptured" class="thumb" width=224 height=224 #paperThumb></canvas>
+      </div>
+      <button *ngIf="!isPaperCaptured" (click)="onPaper()" [disabled]="isButtonLocked" type="button" class="btn btn-outline-secondary add-sample">+</button>
+      <p class="text-muted">Paper</p>
+    </div>
+  </div>
+  <div *ngIf="isStoneCaptured && isScissorsCaptured && isPaperCaptured && !isButtonLocked" class="row mb-5">
+    <div class="col text-center">
+      <button (click)="onTrain()" type="button" class="btn btn-outline-secondary">Train</button>
+    </div>
+    <div class="col text-center">
+      <span *ngIf="errorLoss$ | async as errorLoss">Error {{ errorLoss.toFixed(5) }}</span>
+    </div>
+  </div>
+  <div *ngIf="isTrained" class="row mb-5">
+    <div class="col text-center">
+      <button type="button" class="btn btn-secondary btn-lg">Start!</button>
+    </div>
+  </div>
 </div>
-<h2>Here are some links to help you start: </h2>
-<ul>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://angular.io/tutorial">Tour of Heroes</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://angular.io/cli">CLI Documentation</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://blog.angular.io/">Angular blog</a></h2>
-  </li>
-</ul>
 
-<router-outlet></router-outlet>

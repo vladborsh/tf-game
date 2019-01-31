@@ -1,0 +1,28 @@
+$border-color: #585858;
+
+.webcam-box-outer {
+  background: black;
+  border: 1px solid $border-color;
+  border-radius: 10px;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 9px;
+}
+
+#video {
+  height: 160px;
+  transform: scaleX(-1);
+}
+
+.add-sample {
+  width: 224px;
+  height: 226px;
+  font-size: 150px;
+  line-height: 1;
+  border-radius: 10px;
+}
+
+.thumb {
+  border: 1px solid $border-color;
+  border-radius: 10px;
+}
