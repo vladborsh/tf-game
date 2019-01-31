@@ -6,6 +6,9 @@
       </div>
     </div>
   </div>
+</div>
+
+<div *ngIf="!isGameStarted" class="container">
   <div class="row mb-5">
     <div class="col text-center">
       <div>
@@ -34,12 +37,39 @@
       <button (click)="onTrain()" type="button" class="btn btn-outline-secondary">Train</button>
     </div>
     <div class="col text-center">
-      <span *ngIf="errorLoss$ | async as errorLoss">Error {{ errorLoss.toFixed(5) }}</span>
+      <p *ngIf="errorLoss !== null">Error: {{ errorLoss }}</p>
     </div>
   </div>
   <div *ngIf="isTrained" class="row mb-5">
     <div class="col text-center">
-      <button type="button" class="btn btn-secondary btn-lg">Start!</button>
+      <button (click)="onStart()" type="button" class="btn btn-secondary btn-lg">Start!</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isGameStarted" class="container">
+  <div class="row mb-5">
+    <div class="col text-center">
+      <img *ngIf="humanTurn === 0" class="turn-image" src="assets/images/rock.png">
+      <img *ngIf="humanTurn === 1" class="turn-image" src="assets/images/scissors.png">
+      <img *ngIf="humanTurn === 2" class="turn-image" src="assets/images/paper.png">
+    </div>
+    <div class="col text-center">
+      <div class="timer">{{ timer$ | async }}</div>
+    </div>
+    <div class="col text-center">
+      <img *ngIf="computerTurn === 0" class="turn-image" src="assets/images/rock.png">
+      <img *ngIf="computerTurn === 1" class="turn-image" src="assets/images/scissors.png">
+      <img *ngIf="computerTurn === 2" class="turn-image" src="assets/images/paper.png">
+    </div>
+  </div>
+  <div class="row mb-5">
+    <div class="col text-center">
+      Human score: {{ score.human }}
+    </div>
+    <div class="col"></div>
+    <div class="col text-center">
+      Computer score: {{ score.computer }}
     </div>
   </div>
 </div>

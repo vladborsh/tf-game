@@ -2,8 +2,8 @@ import { Component, ViewChild, OnInit, ElementRef, AfterViewInit } from '@angula
 import { WebCamera } from './webcamera';
 import { NetController } from './net-controller';
 import { Tensor } from '@tensorflow/tfjs';
-import { interval, BehaviorSubject } from 'rxjs';
-import { take, finalize } from 'rxjs/operators';
+import { interval, BehaviorSubject, timer, Observable, Subject, combineLatest } from 'rxjs';
+import { take, finalize, tap, map, last, takeUntil } from 'rxjs/operators';
 import { Config } from './config';
 
 @Component({
@@ -11,7 +11,7 @@ import { Config } from './config';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit, AfterViewInit {
+export class AppComponent implements AfterViewInit {
   @ViewChild('video') videoElement: ElementRef<HTMLVideoElement>;
   @ViewChild('stoneThumb') stoneThumbCanvasElement: ElementRef<HTMLCanvasElement>;
   @ViewChild('scissorsThumb') scissorsThumbCanvasElement: ElementRef<HTMLCanvasElement>;
@@ -24,10 +24,16 @@ export class AppComponent implements OnInit, AfterViewInit {
   public errorLoss: string = null;
   public isTrained = false;
   public isGameStarted = false;
+  public predicted: number;
+  public humanTurn: number;
+  public computerTurn: number;
+  public timer$: Observable<number>;
+  public score = { human: 0, computer: 0 };
 
   private netController: NetController;
-
-  ngOnInit(): void {}
+  private timerFinished$ = new Subject<void>();
+  private finalHumanTurn$ = new Subject<number>();
+  private finalComputerTurn$ = new Subject<number>();
 
   ngAfterViewInit(): void {
     this.netController = new NetController(this.videoElement.nativeElement);
@@ -68,20 +74,58 @@ export class AppComponent implements OnInit, AfterViewInit {
       .subscribe(
         (errorLoss: number) => {
           this.errorLoss = errorLoss.toFixed(5);
-          this.isTrained = (errorLoss < Config.LEARNING_RATE);
+          this.isTrained = (errorLoss < 0.001);
         },
       );
   }
 
-  public onPredict(): void {
-    this.netController.predict();
+  public onStart(): void {
+    this.isGameStarted = true;
+    this.startTimer();
+  }
+
+  public startTimer(): void {
+    this.timer$ = interval(1000)
+      .pipe(
+        take(Config.TIMER + 1),
+        map(val => Config.TIMER - val),
+        finalize(() => {
+          this.finalComputerTurn$.next(Math.floor(Math.random() * 3));
+          this.timerFinished$.next();
+        })
+      );
+
+    combineLatest(this.netController.predictFromCameraCapture$(), this.finalComputerTurn$)
+      .pipe(
+        take(1),
+      )
+      .subscribe(
+        ([finalHumanTurn, finalComputerTurn]: [number, number]) => {
+          this.humanTurn = finalHumanTurn;
+          this.computerTurn = finalComputerTurn;
+          const win = this.compare(finalHumanTurn, finalComputerTurn);
+          this.score = {
+            human: win === 1 ? ++this.score.human : this.score.human,
+            computer: win === -1 ? ++this.score.computer : this.score.computer,
+          };
+          this.startTimer();
+        }
+      );
+  }
+
+  private compare(turn1: number, turn2: number): number {
+    return (turn1 === turn2)
+      ? 0
+      : (turn1 === 0 && turn2 === 1) || (turn1 === 1 && turn2 === 2) || (turn1 === 2 && turn2 === 0)
+        ? 1
+        : -1;
   }
 
   private handleCamera(callback: Function, finalizeCallback?: Function): void {
     this.isButtonLocked = true;
-    interval(100)
+    interval(Config.CAMERA_CAPTURE_INTERVAL)
       .pipe(
-        take(50),
+        take(Config.CAMERA_CAPTURE_SET_SIZE),
         finalize(() => {
           this.isButtonLocked = false;
           return finalizeCallback && finalizeCallback();

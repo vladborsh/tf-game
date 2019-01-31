@@ -60,24 +60,29 @@ export class NetController {
     });
   }
 
-  public async predict() {
-    let isPredicting = true;
+  public predictFromCameraCapture$(): Observable<number> {
+    return Observable.create(observer => {
+      const predict = () => {
+        const predictedClass = tf.tidy(() => {
+          const img = this.webcam.capture();
+          const embeddings = this.truncatedMobileNet.predict(img);
+          const predictions: Tensor<Rank> | Tensor<Rank>[] = this.model.predict(embeddings);
+          return (predictions as Tensor<Rank>).as1D().argMax();
+        });
 
-    while (isPredicting) {
-      const predictedClass = tf.tidy(() => {
-        const img = this.webcam.capture();
-        const embeddings = this.truncatedMobileNet.predict(img);
-        const predictions: Tensor<Rank> | Tensor<Rank>[] = this.model.predict(embeddings);
-        return (predictions as Tensor<Rank>).as1D().argMax();
-      });
+        predictedClass.data()
+          .then(
+            (data: Int32Array) => {
+              observer.next(data[0]);
+              predictedClass.dispose();
 
-      const classId = (await predictedClass.data())[0];
-      predictedClass.dispose();
-      console.log(classId);
-      await tf.nextFrame();
-    }
-
-    isPredicting = false;
+              return tf.nextFrame();
+            }
+          )
+          .then(() => predict());
+      };
+      predict();
+    });
   }
 
   public setExampleHandler(label): void {

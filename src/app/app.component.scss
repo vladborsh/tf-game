@@ -16,7 +16,7 @@ $border-color: #585858;
 
 .add-sample {
   width: 224px;
-  height: 226px;
+  height: 224px;
   font-size: 150px;
   line-height: 1;
   border-radius: 10px;
@@ -25,4 +25,21 @@ $border-color: #585858;
 .thumb {
   border: 1px solid $border-color;
   border-radius: 10px;
+}
+
+.timer {
+  width: 140px;
+  height: 140px;
+  text-align: center;
+  opacity: 0.3;
+  font-size: 100px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.turn-image {
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+  margin: 10px;
 }
