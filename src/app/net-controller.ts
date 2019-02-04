@@ -16,23 +16,30 @@ export class NetController {
   constructor(private video: HTMLVideoElement) {
     this.webcam = new WebCamera(video);
     WebCamera.setup(video).then(() => {
-      this.loadTruncatedMobileNet().then(val => this.truncatedMobileNet = val);
       this.init();
     });
   }
 
   public async init(): Promise<void> {
-    this.truncatedMobileNet = await this.loadTruncatedMobileNet();
-    tf.tidy(() => this.truncatedMobileNet.predict(this.webcam.capture()));
+    this.loadTruncatedMobileNet()
+      .subscribe((model: Model) => {
+        this.truncatedMobileNet = model;
+        tf.tidy(() => this.truncatedMobileNet.predict(this.webcam.capture()));
+      });
   }
 
-  public async loadTruncatedMobileNet(): Promise<Model> {
-    const mobilenet = await tf.loadModel(
-      'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json'
-    );
-
-    const layer = mobilenet.getLayer('conv_pw_13_relu');
-    return tf.model({ inputs: mobilenet.inputs, outputs: layer.output });
+  public loadTruncatedMobileNet(): Observable<Model> {
+    return Observable.create(observer => {
+      tf.loadModel(
+        'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json'
+      ).then(
+        (mobilenet: Model) => {
+          const layer = mobilenet.getLayer('conv_pw_13_relu');
+          observer.next(tf.model({ inputs: mobilenet.inputs, outputs: layer.output }));
+          observer.complete();
+        }
+      );
+    });
   }
 
   public train$(): Observable<number> {

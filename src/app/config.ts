@@ -8,5 +8,4 @@ export class Config {
     public static readonly CAMERA_CAPTURE_INTERVAL = 100;
     public static readonly CAMERA_CAPTURE_SET_SIZE = 50;
     public static readonly TIMER = 3;
-
 }
