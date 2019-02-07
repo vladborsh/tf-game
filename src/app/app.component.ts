@@ -32,7 +32,6 @@ export class AppComponent implements AfterViewInit {
 
   private netController: NetController;
   private timerFinished$ = new Subject<void>();
-  private finalHumanTurn$ = new Subject<number>();
   private finalComputerTurn$ = new Subject<number>();
 
   ngAfterViewInit(): void {
