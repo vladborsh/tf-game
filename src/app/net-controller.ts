@@ -3,7 +3,8 @@ import { Model, Rank, Tensor } from '@tensorflow/tfjs';
 import { WebCamera } from './webcamera';
 import { DatasetController } from './dataset-controller';
 import { Config } from './config';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Observer } from 'rxjs';
+import { switchMapTo } from 'rxjs/operators';
 
 export class NetController {
 
@@ -15,55 +16,26 @@ export class NetController {
 
   constructor(private video: HTMLVideoElement) {
     this.webcam = new WebCamera(video);
-    WebCamera.setup(video).then(() => {
-      this.init();
-    });
   }
 
-  public async init(): Promise<void> {
-    this.loadTruncatedMobileNet()
+  public init(): void {
+    this.webcam.setup()
+      .pipe(
+        switchMapTo(this.loadTruncatedMobileNet$()),
+      )
       .subscribe((model: Model) => {
         this.truncatedMobileNet = model;
         tf.tidy(() => this.truncatedMobileNet.predict(this.webcam.capture()));
       });
   }
 
-  public loadTruncatedMobileNet(): Observable<Model> {
-    return Observable.create(observer => {
-      tf.loadModel(
-        'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json'
-      ).then(
-        (mobilenet: Model) => {
-          const layer = mobilenet.getLayer('conv_pw_13_relu');
-          observer.next(tf.model({ inputs: mobilenet.inputs, outputs: layer.output }));
-          observer.complete();
-        }
-      );
-    });
-  }
-
   public train$(): Observable<number> {
-    return Observable.create(observer => {
-      if (this.datasetController.savedX == null) {
-        throw new Error('Add some examples before training!');
-      }
-
+    return Observable.create((observer: Observer<number>) => {
       this.model = this.getModel();
-
       const optimizer = tf.train.adam(Config.LEARNING_RATE);
-      this.model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
 
-      const batchSize = Math.floor(this.datasetController.savedX.shape[0] * 0.4);
-      if (!(batchSize > 0)) {
-        throw new Error(`Batch size is 0 or NaN. Please choose a non-zero fraction.`);
-      }
-      this.model.fit(this.datasetController.savedX, this.datasetController.savedY, {
-        batchSize,
-        epochs: Config.NUM_EPOCHS,
-        callbacks: {
-          onBatchEnd: async (batch, logs) => observer.next(logs.loss),
-        }
-      });
+      this.model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
+      this.actualModelTrain(observer);
     });
   }
 
@@ -99,6 +71,20 @@ export class NetController {
     });
   }
 
+  private loadTruncatedMobileNet$(): Observable<Model> {
+    return Observable.create(observer => {
+      tf.loadModel(
+        'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json'
+      ).then(
+        (mobilenet: Model) => {
+          const layer = mobilenet.getLayer('conv_pw_13_relu');
+          observer.next(tf.model({ inputs: mobilenet.inputs, outputs: layer.output }));
+          observer.complete();
+        }
+      );
+    });
+  }
+
   private getModel(): Model {
     return tf.sequential({
       layers: [
@@ -119,5 +105,18 @@ export class NetController {
         })
       ]
     });
+  }
+
+  private actualModelTrain(observer: Observer<number>): void {
+    const batchSize = Math.floor(this.datasetController.savedX.shape[0]);
+
+    this.model.fit(this.datasetController.savedX, this.datasetController.savedY, {
+      batchSize,
+      epochs: Config.NUM_EPOCHS,
+      callbacks: {
+        onBatchEnd: async (batch, logs) => observer.next(logs.loss),
+      }
+    })
+    .then(() => observer.complete());
   }
 }

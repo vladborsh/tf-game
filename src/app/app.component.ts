@@ -35,6 +35,7 @@ export class AppComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.netController = new NetController(this.videoElement.nativeElement);
+    this.netController.init();
   }
 
   public onStone(): void {
