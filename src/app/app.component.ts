@@ -31,7 +31,6 @@ export class AppComponent implements AfterViewInit {
   public score = { human: 0, computer: 0 };
 
   private netController: NetController;
-  private timerFinished$ = new Subject<void>();
   private finalComputerTurn$ = new Subject<number>();
 
   ngAfterViewInit(): void {
@@ -90,7 +89,6 @@ export class AppComponent implements AfterViewInit {
         map(val => Config.TIMER - val),
         finalize(() => {
           this.finalComputerTurn$.next(Math.floor(Math.random() * 3));
-          this.timerFinished$.next();
         })
       );
 

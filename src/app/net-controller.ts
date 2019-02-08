@@ -92,7 +92,7 @@ export class NetController {
     });
   }
 
-  public setExampleHandler(label): void {
+  public setExampleHandler(label: number): void {
     tf.tidy(() => {
       const img: Tensor = this.webcam.capture();
       this.datasetController.addExample(this.truncatedMobileNet.predict(img) as Tensor, label);
